@@ -1,7 +1,7 @@
 # COMP 496K Term Project
 
 #### Group Members:
-    Alan Bittner
+    Alan Bittner - 300048480
     Donovan Ollenberger-Kutzer - 300134050
     
 To stitch a set of photos together, name the images in ascending order, with the leftmost image being the smallest.

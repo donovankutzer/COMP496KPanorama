@@ -10,42 +10,52 @@ images: list = []
 # To stitch all images together
 stitcher: cv2.Stitcher = cv2.Stitcher_create()
 
-row, col = 1, 2
-fig, axs = plt.subplots(row, col, figsize=(10, 5))
-fig.tight_layout()
-
-
 def main():
     # Add all images in dir to cv2 and add to list
     for file in files:
         print('images/' + file)
         image = cv2.imread('images/' + file)
         images.append(image)
+    
+    row, col = 1, len(images)
+    fig, axs = plt.subplots(row, col, figsize=(10, 5))
+    fig.tight_layout()
+    fig.suptitle('The images that will be stitched together. Close window to continue.', fontsize=16)
+    i = 0
+    for image in images:
+        axs[i].imshow(image)
+        i += 1
+    plt.show()
+
+    row, col = 1, 2
+    fig, axs = plt.subplots(row, col, figsize=(10, 5))
+    fig.tight_layout()
 
     # Passes image list to stitcher to stitch together
     (status, stitched) = stitcher.stitch(images)
 
     # Continues if stitching is successful
     if status == 0:
-        # Adds stitched image to plot
-        axs[0].imshow(stitched)
+         # Adds stitched image to plot
+        axs[0].imshow(cv2.cvtColor(stitched, cv2.COLOR_BGR2RGB))
         axs[0].set_title('Stitched')
 
         cropped = crop_img(stitched)
 
         # Adds cropped image to plot
-        axs[1].imshow(cropped)
+        axs[1].imshow(cv2.cvtColor(cropped, cv2.COLOR_BGR2RGB))
         axs[1].set_title('Cropped')
 
         plt.show()
 
         cv2.imwrite('stitched.jpg', stitched)
         cv2.imwrite('cropped.jpg', cropped)
-        cv2.waitKey(0)
+        
+       
     else:
         print('Stitching failed (' + str(status) + ')')
 
-
+ 
 def crop_img(image):
     # Convert image to grayscale for contour finding
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -64,17 +74,38 @@ def crop_img(image):
             max_area = cur
             best = c
 
-    # Creates a 4 point polygon
-    approx = cv2.approxPolyDP(best, 0.01 * cv2.arcLength(c, True), True)
+     # Creates a 4 point polygon
+    i = 0.05
+    approx = cv2.approxPolyDP(best, i * cv2.arcLength(c, True), True)
+    previous = ""
+    while len(approx) != 4:
+        if len(approx) < 4:
+            if previous == "increment": return
+            i -= 0.01
+            previous = "decrement"
+        elif len(approx) >4:
+            if previous == "decrement": return
+            i += 0.01
+            previous = "increment"
+        approx = cv2.approxPolyDP(best, i * cv2.arcLength(c, True), True)
+
+
+    approx = sorted(approx, key=lambda x: x[0][0])
+
+    print(approx)
 
     # Finds the inner points, removing all black outer area
+
     x1 = np.maximum(approx[0][0][0], approx[1][0][0])
-    y1 = np.minimum(approx[1][0][1], approx[2][0][1])
     x2 = np.minimum(approx[2][0][0], approx[3][0][0])
-    y2 = np.maximum(approx[0][0][1], approx[3][0][1])
+
+    approx = sorted(approx, key=lambda x: x[0][1])
+    y1 = np.maximum(approx[0][0][1], approx[1][0][1])
+    y2 = np.minimum(approx[2][0][1], approx[3][0][1])
 
     # Crops image with points found above
-    cropped = image[y2: y1, x1: x2]
+    print("%d:%d , %d:%d" %(y1,y2,x1,x2))
+    cropped = image[y1: y2, x1: x2]
 
     return cropped
 
