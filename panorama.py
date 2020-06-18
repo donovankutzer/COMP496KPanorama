@@ -24,6 +24,8 @@ def main():
     fig.tight_layout()
     fig.suptitle('The images that will be stitched together. Close window to continue.', fontsize=16)
     i = 0
+
+    #Displays the images just read in
     for image in images:
         axs[i].imshow(image)
         i += 1
@@ -50,6 +52,8 @@ def main():
 
         plt.show()
 
+        #Writes a stitched and cropped version of the panoramic image
+        print("\nSaved: stitched.jpg, cropped.jpg")
         cv2.imwrite('stitched.jpg', stitched)
         cv2.imwrite('cropped.jpg', cropped)
 
@@ -76,8 +80,6 @@ def crop_img(image):
         print("Cannot find outer coordinates")
         return
 
-    print(outer)
-
     # Gathers actual x, y coordinates for cropping
 
     # Sort by x value
@@ -91,6 +93,7 @@ def crop_img(image):
     y2 = np.minimum(outer[2][0][1], outer[3][0][1])
 
     # Crops image with points found above
+    print("\nCropped Coordinates:")
     print("%d:%d , %d:%d" % (y1, y2, x1, x2))
     cropped = image[y1: y2, x1: x2]
 
